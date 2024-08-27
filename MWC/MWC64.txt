@@ -1,0 +1,35 @@
+MWC64_init :: proc(seed: u64) -> MWC64 {
+	rng := MWC64{0x14057b7ef767814f, 0xcafef00dd15ea5e5, seed, seed}
+	for _ in 0 ..< 8 {rng[2] ~= MWC64_u64(&rng)}
+	return rng
+}
+MWC64_u64 :: proc(r: ^MWC64) -> u64 {
+	mix := u128(r[1]) * u128(0xfeb344657c0af413) + u128(r[0])
+	r^ = {u64(mix >> 64), r[2], r[3], u64(mix)}
+	return u64(mix)
+}
+MWC64 :: [4]u64
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000000
+test set = expanded, folding = extra
+
+length= 1 kilobyte (2^10 bytes)
+  FPF-14+6/64:all                   R= +26.7  p~=   4e-9     VERY SUSPICIOUS
+
+length= 8 kilobytes (2^13 bytes)
+  [Low8/64]DC7-9x1Bytes-1:both      R= +11.8  p =  3.7e-4   unusual
+
+length= 128 kilobytes (2^17 bytes)
+  [Low1/8]DC7-9x1Bytes-1:both       R=  +7.8  p =  5.6e-4   unusual
+
+length= 1 megabyte (2^20 bytes)
+  [Low1/8]DC7-9x1Bytes-1:indep      R=  +9.6  p =   1e-4    unusual
+
+length= 2 gigabytes (2^31 bytes)
+  [Low8/64]FPF-14+6/4:cross         R=  -2.8  p =1-2.2e-5   unusual
+
+length= 32 terabytes (2^45 bytes)
+  no anomalies in 2794 test result(s)

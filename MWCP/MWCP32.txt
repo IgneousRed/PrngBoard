@@ -1,0 +1,33 @@
+MWCP32_init :: proc(seed: u32) -> MWCP32 {
+	rng := MWCP32{0xd15ea5e5, 0xcafef00d, seed, seed}
+	for _ in 0 ..< 8 {rng[2] ~= MWCP32_u32(&rng)}
+	return rng
+}
+MWCP32_u32 :: proc(r: ^MWCP32) -> u32 {
+	mix := u64(r[1]) * u64(0xcfdbc53d) + u64(r[0])
+	r^ = {u32(mix >> 32), r[2], r[3], u32(mix)}
+	return u32(mix >> 32) + u32(mix)
+}
+MWCP32 :: [4]u32
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000000
+test set = expanded, folding = extra
+
+length= 1 kilobyte (2^10 bytes)
+  FPF-14+6/32:all                   R= -14.2  p~= 1-8e-4    unusual
+
+length= 4 kilobytes (2^12 bytes)
+  [Low4/16]FPF-14+6/64:all          R= -19.7  p~= 1-1e-5    mildly suspicious
+  [Low8/32]FPF-14+6/64:all          R= -19.7  p~= 1-1e-5    mildly suspicious
+
+length= 8 kilobytes (2^13 bytes)
+  [Low1/8]FPF-14+6/32:all           R= -24.4  p~= 1-7e-8    very suspicious
+
+length= 64 kilobytes (2^16 bytes)
+  [Low1/64]FPF-14+6/64:all          R= +23.0  p~=   3e-7    suspicious
+
+length= 32 terabytes (2^45 bytes)
+  no anomalies in 2794 test result(s)

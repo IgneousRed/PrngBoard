@@ -1,0 +1,33 @@
+WYR64_init :: proc(seed: u64) -> WYR64 {
+	return (seed + WYR64_MIX) * WYR64_INC * lib.ODD_PHI_64
+}
+WYR64_u64 :: proc(r: ^WYR64) -> u64 {
+	mix := u128(r^) * u128(r^ ~ WYR64_MIX)
+	r^ += WYR64_INC
+	return u64(mix >> 64) ~ u64(mix)
+}
+WYR64 :: u64
+WYR64_MIX :: 0x8bb84b93962eacc9
+WYR64_INC :: 0x2d358dccaa6c78a5
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000000
+test set = expanded, folding = extra
+
+length= 1 kilobyte (2^10 bytes)
+  FPF-14+6/64:all                   R= +15.8  p~=   2e-4    unusual
+
+length= 16 kilobytes (2^14 bytes)
+  [Low4/32]FPF-14+6/64:all          R= +21.9  p~=   1e-6    suspicious
+  [Low8/64]FPF-14+6/64:all          R= +21.9  p~=   1e-6    suspicious
+
+length= 64 kilobytes (2^16 bytes)
+  [Low4/16]Gap-16:A                 R=  +7.8  p =  1.3e-4   unusual
+
+length= 16 terabytes (2^44 bytes)
+  [Low1/8]mod3n(0):(0,9-6)          R= +17.2  p =  1.0e-6   mildly suspicious
+
+length= 32 terabytes (2^45 bytes)
+  [Low1/8]mod3n(0):(0,9-6)          R= +53.6  p =  3.9e-19    FAIL !

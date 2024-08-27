@@ -1,0 +1,35 @@
+MWC8_init :: proc(seed: u8) -> MWC8 {
+	rng := MWC8{0x4e, 0x38, seed, seed}
+	for _ in 0 ..< 8 {rng[2] ~= MWC8_u8(&rng)}
+	return rng
+}
+MWC8_u8 :: proc(r: ^MWC8) -> u8 {
+	mix := u16(r[1]) * u16(0xe4) + u16(r[0])
+	r^ = {u8(mix >> 8), r[2], r[3], u8(mix)}
+	return u8(mix)
+}
+MWC8 :: [4]u8
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000000
+test set = expanded, folding = extra
+
+length= 1 kilobyte (2^10 bytes)
+  FPF-14+6/64:all                   R= +26.4  p~=   6e-9     VERY SUSPICIOUS
+  FPF-14+6/32:all                   R= +13.8  p~=   1e-3    unusual
+
+length= 8 kilobytes (2^13 bytes)
+  [Low1/8]DC7-5x4Bytes-1:both       R= +10.0  p =  4.6e-4   unusual
+
+length= 32 kilobytes (2^15 bytes)
+  [Low8/32]FPF-14+6/4:all           R= +13.2  p =  1.4e-8   very suspicious
+
+length= 64 kilobytes (2^16 bytes)
+  [Low8/32]FPF-14+6/4:(2,14-8)      R= +52.5  p =  7.9e-38    FAIL !!!
+  [Low8/32]FPF-14+6/4:(3,14-9)      R= +49.8  p =  1.1e-31    FAIL !!!
+  [Low8/32]FPF-14+6/4:(4,14-10)     R= +19.9  p =  3.6e-11  very suspicious
+  [Low8/32]FPF-14+6/4:(6,14-11)     R= +79.0  p =  2.9e-35    FAIL !!!
+  [Low8/32]FPF-14+6/4:all           R= +57.8  p =  1.6e-39    FAIL !!!
+  [Low8/32]FPF-14+6/4:cross         R= +10.9  p =  1.6e-8   very suspicious

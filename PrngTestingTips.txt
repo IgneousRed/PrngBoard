@@ -1,0 +1,16 @@
+A low score doesn not prove PRNG is not random.
+  Even true random can output all 0s.
+A high score does not prove PRNG is random.
+  It might have been lucky, tho very unlikely.
+Always make sure you are piping the right data.
+  If you are piping 32bits as 64bits it will fail immediately,
+    however some popular RNGs are indeed bad.
+    I once made a mistake of sending the buffer address repeatedly,
+      instead of the data in it... Was quite confused for several hours.
+  It is more of a concern piping 64bits as 32bits for example,
+    as you may get a better outcome without knowing it.
+  Be VERY carefull when making and testing non-power-of-2 RNGs, even more so with non-byte ones.
+
+2 multicore tests at a time on my Mac:
+  required Real time is around 149.73h (6.23875 days)
+  required CPU time is around 419h

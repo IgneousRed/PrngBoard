@@ -1,0 +1,46 @@
+MWC16_init :: proc(seed: u16) -> MWC16 {
+	rng := MWC16{0x814f, 0xf767, seed, seed}
+	for _ in 0 ..< 8 {rng[2] ~= MWC16_u16(&rng)}
+	return rng
+}
+MWC16_u16 :: proc(r: ^MWC16) -> u16 {
+	mix := u32(r[1]) * u32(0x9969) + u32(r[0])
+	r^ = {u16(mix >> 16), r[2], r[3], u16(mix)}
+	return u16(mix)
+}
+MWC16 :: [4]u16
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000000
+test set = expanded, folding = extra
+
+length= 32 kilobytes (2^15 bytes)
+  [Low1/32]FPF-14+6/64:all          R= -24.6  p~= 1-5e-8    very suspicious
+
+length= 64 kilobytes (2^16 bytes)
+  [Low1/64]FPF-14+6/64:all          R= -19.8  p~= 1-8e-6    unusual
+
+length= 8 megabytes (2^23 bytes)
+  [Low1/8]DC7-9x1Bytes-1:indep      R=  -2.0  p = 1-1e-4    unusual
+
+length= 256 megabytes (2^28 bytes)
+  [Low1/8]FPF-14+6/4:(0,14-0)       R=  +8.1  p =  4.1e-7   unusual
+  [Low1/8]FPF-14+6/4:all            R=  +7.4  p =  1.9e-6   mildly suspicious
+
+length= 512 megabytes (2^29 bytes)
+  [Low1/8]FPF-14+6/4:(0,14-0)       R= +12.9  p =  1.5e-11   VERY SUSPICIOUS
+  [Low1/8]FPF-14+6/4:all            R= +10.5  p =  2.6e-9   very suspicious
+
+length= 1 gigabyte (2^30 bytes)
+  DC7-6x2Bytes-1:odd                R=  +8.1  p =  1.4e-4   unusual
+  DC7-6x2Bytes-1:both               R= +11.6  p =  6.8e-6   mildly suspicious
+  DC7-6x2Bytes-1:indep              R= +12.2  p =   1e-5    mildly suspicious
+  [Low1/8]FPF-14+6/16:all           R=  +6.4  p =  1.7e-5   unusual
+  [Low1/8]FPF-14+6/4:(0,14-0)       R= +24.0  p =  7.2e-22    FAIL !
+  [Low1/8]FPF-14+6/4:(1,14-0)       R= +15.3  p =  8.5e-14   VERY SUSPICIOUS
+  [Low1/8]FPF-14+6/4:all            R= +20.7  p =  6.4e-19    FAIL !
+  [Low4/16]FPF-14+6/4:(5,14-0)      R= +11.3  p =  4.5e-10  very suspicious
+  [Low4/16]FPF-14+6/4:(6,14-1)      R=  +8.8  p =  1.6e-7   unusual
+  [Low4/16]FPF-14+6/4:all           R=  +9.0  p =  6.3e-8   very suspicious

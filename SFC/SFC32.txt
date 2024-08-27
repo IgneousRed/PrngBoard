@@ -1,0 +1,26 @@
+SFC32_init :: proc(seed: u32) -> SFC32 {
+	rng := SFC32{seed, seed, seed, seed}
+	for _ in 0 ..< 9 do SFC32_u32(&rng)
+	return rng
+}
+SFC32_u32 :: proc(r: ^SFC32) -> u32 {
+	result := r[0] + r[1] + r[3]
+	r[0] = r[1] ~ (r[1] >> 9)
+	r[1] = r[2] + (r[2] << 3)
+	r[2] = bits.rotate_left32(r[2], 21) + result
+	r[3] += 1
+	return result
+}
+SFC32 :: [4]u32
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000000
+test set = expanded, folding = extra
+
+length= 2 kilobytes (2^11 bytes)
+  DC7-9x1Bytes-1:odd                R=  -3.4  p =1-4.6e-3   unusual
+
+length= 32 terabytes (2^45 bytes)
+  no anomalies in 2795 test result(s)

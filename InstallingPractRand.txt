@@ -1,0 +1,13 @@
+Note: I have only tried this on my Mac M2, but should also work for Linux
+
+0. Download latest PractRand (https://sourceforge.net/projects/pracrand/files/)
+1. Place it where most convenient
+2. Open a terminal in that folder
+3. Type (There will probably be some warnings):
+  g++ -std=c++14 -c src/*.cpp src/RNGs/*.cpp src/RNGs/other/*.cpp -O3 -Iinclude -pthread
+  ar rcs libPractRand.a *.o
+  rm *.o
+  g++ -std=c++14 -o PractRandTest tools/RNG_test.cpp libPractRand.a -O3 -Iinclude -pthread
+4. Add the folder to PATH
+
+If you have dificulties, do post an issue

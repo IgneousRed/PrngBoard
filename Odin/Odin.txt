@@ -1,0 +1,128 @@
+Odin_init :: proc(seed: u64) -> (rng: Odin) {
+	rng.inc = (seed << 1) | 1
+	Odin_u64(&rng)
+	rng.state += seed
+	Odin_u64(&rng)
+	return
+}
+Odin_u64 :: proc(r: ^Odin) -> u64 {
+	hi5 := r.state >> 59
+	mix := ((hi5 + 5) ~ r.state) * 12605985483714917081
+	r.state = r.state * 6364136223846793005 + (r.inc | 1)
+	return (mix >> hi5) | (mix << (-hi5 & 63))
+}
+Odin :: struct {
+	state: u64,
+	inc:   u64,
+}
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000002
+test set = expanded, folding = extra
+
+length= 1 kilobyte (2^10 bytes)
+  FPF-14+6/64:all                   R= +15.0  p~=   4e-4    unusual
+
+length= 8 kilobytes (2^13 bytes)
+  [Low1/8]FPF-14+6/64:all           R= +24.0  p~=   1e-7    very suspicious
+  [Low4/32]FPF-14+6/64:all          R= +29.9  p~=   6e-11    VERY SUSPICIOUS
+  [Low8/32]DC7-6x2Bytes-1:indep     R=  +9.7  p =   1e-4    unusual
+  [Low8/64]FPF-14+6/64:all          R= +29.9  p~=   6e-11    VERY SUSPICIOUS
+
+length= 32 kilobytes (2^15 bytes)
+  [Low1/16]FPF-14+6/64:all          R= +22.1  p~=   8e-7    suspicious
+
+length= 64 kilobytes (2^16 bytes)
+  [Low1/16]FPF-14+6/16:cross        R=  +6.8  p~=  6.7e-5   unusual
+  [Low1/64]FPF-14+6/64:all          R= +21.6  p~=   1e-6    mildly suspicious
+
+length= 128 kilobytes (2^17 bytes)
+  [Low1/8]FPF-14+6/32:cross         R=  +7.3  p =  2.4e-5   unusual
+  [Low1/16]FPF-14+6/16:all          R= +12.4  p =  2.6e-6   mildly suspicious
+  [Low1/16]FPF-14+6/16:cross        R= +10.2  p =  3.9e-7   suspicious
+  [Low1/64]FPF-14+6/4:all           R= +13.7  p =  4.9e-7   suspicious
+  [Low1/64]FPF-14+6/4:cross         R=  +9.2  p =  1.8e-6   mildly suspicious
+  [Low4/32]FPF-14+6/32:cross        R=  +7.1  p =  3.6e-5   unusual
+  [Low4/64]FPF-14+6/16:cross        R=  +6.9  p =  4.7e-5   unusual
+  [Low8/64]FPF-14+6/32:cross        R=  +7.3  p =  2.6e-5   unusual
+
+length= 256 kilobytes (2^18 bytes)
+  [Low1/8]DC7-9x1Bytes-1:even       R= +11.1  p =  1.3e-5   mildly suspicious
+  [Low1/8]DC7-9x1Bytes-1:odd        R= +10.2  p =  3.8e-5   mildly suspicious
+  [Low1/8]DC7-9x1Bytes-1:indep      R= +19.3  p =   1e-8    very suspicious
+  [Low1/8]FPF-14+6/32:all           R= +16.1  p =  3.4e-10   VERY SUSPICIOUS
+  [Low1/8]FPF-14+6/32:cross         R= +12.3  p =  1.0e-8   very suspicious
+  [Low1/8]FPF-14+6/16:all           R=  +8.1  p =  3.6e-5   unusual
+  [Low1/8]FPF-14+6/16:cross         R=  +9.2  p =  1.0e-6   mildly suspicious
+  [Low1/16]FPF-14+6/32:all          R= +12.6  p =  1.9e-6   mildly suspicious
+  [Low1/16]FPF-14+6/32:cross        R= +12.5  p =  1.6e-8   very suspicious
+  [Low1/16]FPF-14+6/16:all          R= +11.4  p =  4.7e-7   suspicious
+  [Low1/16]FPF-14+6/16:cross        R= +13.9  p =  1.0e-9   very suspicious
+  [Low1/32]FPF-14+6/32:cross        R=  +7.9  p~=  1.5e-5   unusual
+  [Low1/32]FPF-14+6/16:cross        R=  +8.6  p =  3.9e-6   mildly suspicious
+  [Low1/32]FPF-14+6/4:all           R=  +8.8  p =  1.2e-5   unusual
+  [Low1/32]FPF-14+6/4:cross         R=  +8.9  p =  1.5e-6   mildly suspicious
+  [Low1/64]FPF-14+6/16:cross        R=  +8.9  p~=  3.7e-6   mildly suspicious
+  [Low1/64]FPF-14+6/4:all           R= +12.4  p =  9.8e-8   suspicious
+  [Low1/64]FPF-14+6/4:cross         R= +14.4  p =  4.9e-10   VERY SUSPICIOUS
+  [Low4/16]FPF-14+6/32:cross        R=  +7.0  p =  2.6e-5   unusual
+  [Low4/32]FPF-14+6/32:cross        R=  +9.0  p =  1.5e-6   mildly suspicious
+  [Low4/32]FPF-14+6/16:cross        R=  +7.7  p =  8.9e-6   unusual
+  [Low4/64]FPF-14+6/32:cross        R=  +8.3  p =  5.9e-6   mildly suspicious
+  [Low4/64]FPF-14+6/16:cross        R=  +8.9  p =  1.7e-6   mildly suspicious
+  [Low8/32]FPF-14+6/32:cross        R=  +6.6  p =  4.5e-5   unusual
+  [Low8/64]FPF-14+6/32:cross        R=  +8.9  p =  1.8e-6   mildly suspicious
+  [Low8/64]FPF-14+6/16:cross        R=  +6.6  p =  5.0e-5   unusual
+
+length= 512 kilobytes (2^19 bytes)
+  [Low1/8]DC7-9x1Bytes-1:even       R= +10.2  p =  3.5e-5   mildly suspicious
+  [Low1/8]DC7-9x1Bytes-1:odd        R= +12.2  p =  3.7e-6   suspicious
+  [Low1/8]DC7-9x1Bytes-1:indep      R= +20.7  p =   3e-9    very suspicious
+  [Low1/8]DC7-6x2Bytes-1:even       R= +10.1  p =  7.7e-5   unusual
+  [Low1/8]DC7-6x2Bytes-1:odd        R=  +9.8  p =  9.9e-5   unusual
+  [Low1/8]DC7-6x2Bytes-1:indep      R= +16.7  p =   1e-7    suspicious
+  [Low1/8]FPF-14+6/32:(2,14-9)      R= +13.1  p =  1.6e-8   mildly suspicious
+  [Low1/8]FPF-14+6/32:all           R= +24.4  p =  5.4e-16    FAIL !
+  [Low1/8]FPF-14+6/32:cross         R= +21.2  p =  1.8e-14    FAIL
+  [Low1/8]FPF-14+6/16:all           R= +12.4  p =  2.0e-8   very suspicious
+  [Low1/8]FPF-14+6/16:cross         R= +10.1  p =  5.8e-8   very suspicious
+  [Low1/8]FPM:G9:e0                 R=  -5.8  p~=   3e-9    very suspicious
+  [Low1/16]DC7-9x1Bytes-1:indep     R= +11.4  p =   2e-5    unusual
+  [Low1/16]FPF-14+6/32:all          R= +16.7  p =  1.4e-10   VERY SUSPICIOUS
+  [Low1/16]FPF-14+6/32:cross        R= +23.5  p =  6.7e-16    FAIL !
+  [Low1/16]FPF-14+6/16:all          R= +13.1  p =  1.7e-8   very suspicious
+  [Low1/16]FPF-14+6/16:cross        R= +22.3  p =  3.5e-15    FAIL
+  [Low1/16]FPM:G9:e0                R=  -4.7  p~=   1e-6    unusual
+  [Low1/32]FPF-14+6/64:cross        R= +14.5  p~=  1.4e-9   very suspicious
+  [Low1/32]FPF-14+6/32:all          R= +15.6  p =  4.3e-8   very suspicious
+  [Low1/32]FPF-14+6/32:cross        R= +25.1  p =  2.4e-16    FAIL !
+  [Low1/32]FPF-14+6/16:all          R=  +9.8  p =  5.1e-6   mildly suspicious
+  [Low1/32]FPF-14+6/16:cross        R= +21.8  p =  8.2e-15    FAIL
+  [Low1/32]FPF-14+6/4:all           R= +10.5  p =  3.7e-7   suspicious
+  [Low1/32]FPF-14+6/4:cross         R= +13.6  p =  1.4e-10   VERY SUSPICIOUS
+  [Low1/64]FPF-14+6/32:cross        R= +12.7  p~=  1.6e-8   very suspicious
+  [Low1/64]FPF-14+6/16:all          R= +17.5  p =  4.5e-9   very suspicious
+  [Low1/64]FPF-14+6/16:cross        R= +26.5  p =  3.3e-17    FAIL !
+  [Low1/64]FPF-14+6/4:(0,14-8)      R=  +9.8  p =  4.4e-7   unusual
+  [Low1/64]FPF-14+6/4:all           R= +18.3  p =  6.5e-12   VERY SUSPICIOUS
+  [Low1/64]FPF-14+6/4:cross         R= +23.7  p =  4.2e-16    FAIL !
+  [Low4/16]FPF-14+6/32:cross        R=  +9.9  p =  8.0e-8   suspicious
+  [Low4/16]FPM:G9:e0                R=  -5.3  p~=   6e-8    mildly suspicious
+  [Low4/32]FPF-14+6/64:(0,14-8)     R= +10.6  p =  1.1e-7   unusual
+  [Low4/32]FPF-14+6/32:cross        R= +18.8  p =  6.2e-13    FAIL
+  [Low4/32]FPF-14+6/16:cross        R= +10.0  p =  6.8e-8   very suspicious
+  [Low4/32]FPM:G9:e0                R=  -4.8  p~=   8e-7    unusual
+  [Low4/64]FPF-14+6/32:all          R= +11.8  p =  2.3e-7   suspicious
+  [Low4/64]FPF-14+6/32:cross        R= +20.7  p =  4.3e-14    FAIL
+  [Low4/64]FPF-14+6/16:all          R=  +7.8  p =  5.7e-5   unusual
+  [Low4/64]FPF-14+6/16:cross        R= +18.1  p =  1.7e-12    FAIL
+  [Low4/64]FPM:G9:e0                R=  -7.0  p~=   1e-12    VERY SUSPICIOUS
+  [Low8/32]FPF-14+6/32:cross        R=  +9.2  p =  2.7e-7   suspicious
+  [Low8/32]FPM:G9:e0                R=  -5.0  p~=   2e-7    mildly suspicious
+  [Low8/64]FPF-14+6/64:(0,14-8)     R= +10.8  p =  8.8e-8   unusual
+  [Low8/64]FPF-14+6/64:all          R= +11.4  p =  4.6e-7   suspicious
+  [Low8/64]FPF-14+6/32:all          R=  +8.3  p =  2.3e-5   unusual
+  [Low8/64]FPF-14+6/32:cross        R= +18.5  p =  9.0e-13    FAIL
+  [Low8/64]FPF-14+6/16:cross        R=  +9.8  p =  9.3e-8   suspicious

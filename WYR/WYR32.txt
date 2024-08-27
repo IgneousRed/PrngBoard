@@ -1,0 +1,34 @@
+WYR32_init :: proc(seed: u32) -> WYR32 {
+	return (seed + WYR32_MIX) * WYR32_INC * lib.ODD_PHI_32
+}
+WYR32_u32 :: proc(r: ^WYR32) -> u32 {
+	mix := u64(r^) * u64(r^ ~ WYR32_MIX)
+	r^ += WYR32_INC
+	return u32(mix >> 32) ~ u32(mix)
+}
+WYR32 :: u32
+WYR32_MIX :: 0x74743c1b
+WYR32_INC :: 0x53c5ca59
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000000
+test set = expanded, folding = extra
+
+length= 1 kilobyte (2^10 bytes)
+  FPF-14+6/32:all                   R= +14.6  p~=   6e-4    unusual
+
+length= 32 megabytes (2^25 bytes)
+  [Low4/32]Gap-16:A                 R=  +8.3  p =  2.8e-6   mildly suspicious
+  [Low4/64]Gap-16:A                 R=  +6.2  p =  1.1e-4   unusual
+  [Low8/32]Gap-16:A                 R=  +9.3  p =  2.6e-7   suspicious
+  [Low8/64]Gap-16:A                 R=  +7.4  p =  1.4e-5   unusual
+
+length= 64 megabytes (2^26 bytes)
+  [Low4/32]Gap-16:A                 R= +17.3  p =  3.5e-14    FAIL
+  [Low4/32]Gap-16:B                 R=  +6.7  p =  1.7e-5   unusual
+  [Low4/64]Gap-16:A                 R= +21.9  p =  3.5e-17    FAIL !
+  [Low8/32]BCFN(0+8,13-7,T)         R= +19.1  p =  2.2e-6   unusual
+  [Low8/32]Gap-16:A                 R= +16.8  p =  7.9e-13    FAIL
+  [Low8/64]Gap-16:A                 R= +15.1  p =  2.4e-12    FAIL

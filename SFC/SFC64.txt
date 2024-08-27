@@ -1,0 +1,32 @@
+SFC64_init :: proc(seed: u64) -> SFC64 {
+	rng := SFC64{seed, seed, seed, seed}
+	for _ in 0 ..< 9 do SFC64_u64(&rng)
+	return rng
+}
+SFC64_u64 :: proc(r: ^SFC64) -> u64 {
+	result := r[0] + r[1] + r[3]
+	r[0] = r[1] ~ (r[1] >> 11)
+	r[1] = r[2] + (r[2] << 3)
+	r[2] = bits.rotate_left64(r[2], 24) + result
+	r[3] += 1
+	return result
+}
+SFC64 :: [4]u64
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000000
+test set = expanded, folding = extra
+
+length= 1 kilobyte (2^10 bytes)
+  FPF-14+6/64:all                   R= +16.0  p~=   2e-4    unusual
+
+length= 8 kilobytes (2^13 bytes)
+  [Low4/32]BCFN(0+0,13-9,T)         R=  -3.6  p =1-1.7e-4   unusual
+
+length= 2 terabytes (2^41 bytes)
+  [Low1/64]BCFN(0+1,13-0,T)         R=  -9.5  p =1-4.5e-5   unusual
+
+length= 32 terabytes (2^45 bytes)
+  no anomalies in 2793 test result(s)

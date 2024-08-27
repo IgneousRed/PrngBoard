@@ -1,0 +1,27 @@
+MWCP16_init :: proc(seed: u16) -> MWCP16 {
+	rng := MWCP16{0x814f, 0xf767, seed, seed}
+	for _ in 0 ..< 8 {rng[2] ~= MWCP16_u16(&rng)}
+	return rng
+}
+MWCP16_u16 :: proc(r: ^MWCP16) -> u16 {
+	mix := u32(r[1]) * u32(0x9969) + u32(r[0])
+	r^ = {u16(mix >> 16), r[2], r[3], u16(mix)}
+	return u16(mix >> 16) + u16(mix)
+}
+MWCP16 :: [4]u16
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000000
+test set = expanded, folding = extra
+
+length= 1 kilobyte (2^10 bytes)
+  FPF-14+6/64:all                   R= -15.9  p~= 1-2e-4    unusual
+
+length= 16 terabytes (2^44 bytes)
+  DC7-9x1Bytes-1:odd                R= +10.2  p =  2.1e-4   unusual
+
+length= 32 terabytes (2^45 bytes)
+  DC7-9x1Bytes-1:odd                R= +16.5  p =  1.4e-6   suspicious
+  DC7-9x1Bytes-1:indep              R= +11.7  p =   1e-5    unusual

@@ -1,0 +1,40 @@
+MWCP8_init :: proc(seed: u8) -> MWCP8 {
+	rng := MWCP8{0x4e, 0x38, seed, seed}
+	for _ in 0 ..< 8 {rng[2] ~= MWCP8_u8(&rng)}
+	return rng
+}
+MWCP8_u8 :: proc(r: ^MWCP8) -> u8 {
+	mix := u16(r[1]) * u16(0xe4) + u16(r[0])
+	r^ = {u8(mix >> 8), r[2], r[3], u8(mix)}
+	return u8(mix >> 8) + u8(mix)
+}
+MWCP8 :: [4]u8
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000000
+test set = expanded, folding = extra
+
+length= 64 kilobytes (2^16 bytes)
+  [Low1/64]FPF-14+6/32:all          R= +21.0  p~=   2e-6    mildly suspicious
+
+length= 32 megabytes (2^25 bytes)
+  [Low8/32]FPF-14+6/4:all           R=  +6.4  p =  1.7e-5   unusual
+
+length= 64 megabytes (2^26 bytes)
+  DC7-9x1Bytes-1:both               R=  +7.7  p =  2.6e-4   unusual
+  [Low8/32]BCFN(0+2,13-5,T)         R=  -7.8  p =1-3.1e-5   unusual
+  [Low8/32]FPF-14+6/16:all          R=  +7.0  p =  4.4e-6   mildly suspicious
+  [Low8/32]FPF-14+6/4:all           R= +10.7  p =  1.5e-9   very suspicious
+
+length= 128 megabytes (2^27 bytes)
+  FPF-14+6/4:all                    R= -11.5  p =1-6.8e-11   VERY SUSPICIOUS
+  [Low1/8]FPF-14+6/4:all            R=  -7.4  p =1-8.3e-7   mildly suspicious
+  [Low4/32]FPF-14+6/4:all           R=  +6.0  p =  3.9e-5   unusual
+  [Low8/32]FPF-14+6/32:all          R=  +8.9  p =  7.1e-8   suspicious
+  [Low8/32]FPF-14+6/16:(0,14-0)     R=  +9.7  p =  1.6e-8   mildly suspicious
+  [Low8/32]FPF-14+6/16:all          R= +14.0  p =  1.2e-12    FAIL
+  [Low8/32]FPF-14+6/4:(0,14-0)      R=  +7.8  p =  8.0e-7   unusual
+  [Low8/32]FPF-14+6/4:(1,14-0)      R=  +8.9  p =  8.1e-8   mildly suspicious
+  [Low8/32]FPF-14+6/4:all           R= +15.0  p =  1.4e-13    FAIL
