@@ -3,6 +3,7 @@ package SFC
 import "core:math/bits"
 
 // SFC is a slightly modified SmallFastCounter (https://pracrand.sourceforge.net/)
+// The initialization is slightly different.
 //
 // It would be possible to implement walking backwards.
 //

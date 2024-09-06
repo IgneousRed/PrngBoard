@@ -1,18 +1,18 @@
 # PRNG Board
 This repository contains benchmarks of various Pseudo Random Number Generators.
 
-## PRNGs tested:
+## PRNGs tested
 - **MWC**
 - **MWCP** MWC with output permutation
 - **SFC** slightly modified SFC
 - **WYR** slightly modified WYRand
-- **Odin**
+- **Odin** based on PCG (could not find exact PCG)
 
-## PRNGs to be tested:
-- **SFCK:** SFC but incrementing by k, seems to be slightly worse, but faster (on AArch64).
+## PRNGs to be tested
+- **SFCK:** SFC but incrementing by k, seems to be a touch worse, but faster (on AArch64).
 - **XoShiRo and XoRoShiRo:** Not a fan, will put results at some point.
 
-## Criteria:
+## Criteria
 - **Randomness:** How random the PRNG appears to be.
 - **Predictability:** How hard to predict future PRNG values given X consecutive values (assuming the PRNG used is known).
 - **Speed:** How quickly the PRNG produces random numbers.
@@ -22,6 +22,7 @@ This repository contains benchmarks of various Pseudo Random Number Generators.
 ## Randomness
 Randomness is measured by how many outputs does the testing software need to detect a statistical improbability.
 The software used is PractRand (to my knowleadge ammong the best, and at the same time the most pleasent to use).
+Used PractRand settings are Extended + Max Fold (the most rigorous)
 
 ### **MWC:**
 Probably scales liniarly
@@ -118,10 +119,10 @@ Great on modern CPUs, not so much on CPUs with slow multiply. Can have an arbitr
 Great on modern CPUs, not so much on CPUs with slow multiply. Can have an arbitrary long period. Can't easily be peppered.
 
 ### **SFC**
-Great on all CPUs. It's constant can be peppered.
+Great on all CPUs. Its constant can be peppered.
 
 ### **WYR**
-Great on modern CPUs, not so much on CPUs with slow multiply. It's 2 constants can be peppered.
+Great on modern CPUs, not so much on CPUs with slow multiply. Its 2 constants can be peppered.
 
 ### **Odin**
 Use something else.

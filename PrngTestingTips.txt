@@ -11,6 +11,6 @@ Always make sure you are piping the right data.
     as you may get a better outcome without knowing it.
   Be VERY carefull when making and testing non-power-of-2 RNGs, even more so with non-byte ones.
 
-2 multicore tests at a time on my Mac:
+2 multicore 2^45 bytes tests at a time on my Mac:
   required Real time is around 149.73h (6.23875 days)
-  required CPU time is around 419h
+  required CPU time is around 415-430h

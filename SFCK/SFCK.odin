@@ -1,10 +1,12 @@
 package SFCK
 
+import "../lib"
 import "core:math/bits"
 
 // ***TESTS NOT DONE***, but it is similar to SFC.
 //
 // SFCK is a slightly modified SmallFastCounter (https://pracrand.sourceforge.net/)
+// The initialization is slightly different, as is the increment.
 //
 // It would be possible to implement walking backwards.
 //
@@ -30,7 +32,7 @@ SFCK64_u64 :: proc(r: ^SFCK64) -> u64 {
 	r[0] = r[1] ~ (r[1] >> 11)
 	r[1] = r[2] + (r[2] << 3)
 	r[2] = bits.rotate_left64(r[2], 24) + result
-	r[3] += 1
+	r[3] += lib.ODD_PHI_64
 	return result
 }
 SFCK64 :: [4]u64
@@ -47,7 +49,7 @@ SFCK32_u32 :: proc(r: ^SFCK32) -> u32 {
 	r[0] = r[1] ~ (r[1] >> 9)
 	r[1] = r[2] + (r[2] << 3)
 	r[2] = bits.rotate_left32(r[2], 21) + result
-	r[3] += 1
+	r[3] += lib.ODD_PHI_32
 	return result
 }
 SFCK32 :: [4]u32
@@ -64,7 +66,7 @@ SFCK16_u16 :: proc(r: ^SFCK16) -> u16 {
 	r[0] = r[1] ~ (r[1] >> 3)
 	r[1] = r[2] + (r[2] << 2)
 	r[2] = bits.rotate_left16(r[2], 4) + result
-	r[3] += 1
+	r[3] += lib.ODD_PHI_16
 	return result
 }
 SFCK16 :: [4]u16
@@ -81,7 +83,7 @@ SFCK8_u8 :: proc(r: ^SFCK8) -> u8 {
 	r[0] = r[1] ~ (r[1] >> 2)
 	r[1] = r[2] + (r[2] << 3)
 	r[2] = bits.rotate_left8(r[2], 5) + result
-	r[3] += 1
+	r[3] += lib.ODD_PHI_8
 	return result
 }
 SFCK8 :: [4]u8

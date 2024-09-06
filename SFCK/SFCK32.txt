@@ -8,7 +8,7 @@ SFC32_u32 :: proc(r: ^SFC32) -> u32 {
 	r[0] = r[1] ~ (r[1] >> 9)
 	r[1] = r[2] + (r[2] << 3)
 	r[2] = bits.rotate_left32(r[2], 21) + result
-	r[3] += 1
+	r[3] += 0x9e3779b9
 	return result
 }
 SFC32 :: [4]u32
@@ -16,11 +16,26 @@ SFC32 :: [4]u32
 ----------------------------------------------------------------
 
 RNG_test using PractRand version 0.95
-RNG = RNG_stdin, seed = 0x0000000000000000
+RNG = RNG_stdin, seed = 0x0000000000000001
 test set = expanded, folding = extra
 
-length= 2 kilobytes (2^11 bytes)
-  DC7-9x1Bytes-1:odd                R=  -3.4  p =1-4.6e-3   unusual
+length= 1 kilobyte (2^10 bytes)
+  FPF-14+6/64:all                   R= +12.9  p~=   2e-3    unusual
+
+length= 4 kilobytes (2^12 bytes)
+  [Low4/16]FPF-14+6/64:all          R= +19.7  p~=   9e-6    mildly suspicious
+  [Low8/32]FPF-14+6/64:all          R= +19.7  p~=   9e-6    mildly suspicious
+
+length= 8 kilobytes (2^13 bytes)
+  [Low1/8]FPF-14+6/64:all           R= +21.6  p~=   1e-6    suspicious
+  [Low4/32]FPF-14+6/64:all          R= +21.6  p~=   1e-6    suspicious
+  [Low8/64]FPF-14+6/64:all          R= +21.6  p~=   1e-6    suspicious
+
+length= 2 megabytes (2^21 bytes)
+  [Low1/64]DC7-9x1Bytes-1:both      R=  +9.0  p =  1.2e-4   unusual
+
+length= 4 megabytes (2^22 bytes)
+  [Low1/16]DC7-5x4Bytes-1:indep     R=  -2.0  p = 1-6e-5    unusual
 
 length= 32 terabytes (2^45 bytes)
-  no anomalies in 2795 test result(s)
+  no anomalies in 2789 test result(s)
