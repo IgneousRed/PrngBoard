@@ -3,8 +3,6 @@ package SFCK
 import "../lib"
 import "core:math/bits"
 
-// ***TESTS NOT DONE***, but it is similar to SFC.
-//
 // SFCK is a slightly modified SmallFastCounter (https://pracrand.sourceforge.net/)
 // The initialization is slightly different, as is the increment.
 //

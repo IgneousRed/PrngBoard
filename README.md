@@ -5,11 +5,11 @@ This repository contains benchmarks of various Pseudo Random Number Generators.
 - **MWC**
 - **MWCP** MWC with output permutation
 - **SFC** slightly modified SFC
+- **SFCK** slightly modified SFC
 - **WYR** slightly modified WYRand
 - **Odin** based on PCG (could not find exact PCG)
 
 ## PRNGs to be tested
-- **SFCK:** SFC but incrementing by k, seems to be a touch worse, but faster (on AArch64).
 - **XoShiRo and XoRoShiRo:** Not a fan, will put results at some point.
 
 ## Criteria
@@ -45,6 +45,13 @@ Probably scales worse than liniarly
 - **128bit state, 32bit output:** >2^45 bytes
 - **256bit state, 64bit output:** >2^45 bytes
 
+### **SFCK:**
+Probably scales worse than liniarly
+- **32bit state, 8bit output:** 2^28 bytes
+- **64bit state, 16bit output:** >2^45 bytes
+- **128bit state, 32bit output:** >2^45 bytes
+- **256bit state, 64bit output:** >2^45 bytes
+
 ### **WYR:**
 Probably scales liniarly
 - **32bit state, 32bit output:** 2^26 bytes
@@ -67,6 +74,9 @@ Not Cryptographicly Safe, but probably much better than MWC.
 ### **SFC**
 Not Cryptographicly Safe, but probably annoying.
 
+### **SFCK**
+Not Cryptographicly Safe, but probably annoying.
+
 ### **WYR**
 Not Cryptographicly Safe, probably not trivial.
 
@@ -87,6 +97,9 @@ At some point I should investigate "prof/spall" from the core library.
 ### **SFC64:**
 - **Mac M2 Pro:** 0.992 ns/op
 
+### **SFCK64:**
+- **Mac M2 Pro:** 0.900 ns/op
+
 ### **WYR64:**
 - **Mac M2 Pro:** 0.381 ns/op
 
@@ -104,6 +117,9 @@ WordBytes * 4
 ### **SFC**
 WordBytes * 4
 
+### **SFCK**
+WordBytes * 4
+
 ### **WYR**
 WordBytes
 
@@ -119,6 +135,9 @@ Great on modern CPUs, not so much on CPUs with slow multiply. Can have an arbitr
 Great on modern CPUs, not so much on CPUs with slow multiply. Can have an arbitrary long period. Can't easily be peppered.
 
 ### **SFC**
+Great on all CPUs. Its constant can be peppered.
+
+### **SFCK**
 Great on all CPUs. Its constant can be peppered.
 
 ### **WYR**
