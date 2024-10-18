@@ -1,0 +1,56 @@
+FSR8_init :: proc(seed: u8) -> FSR8 {
+	rng := FSR8{seed, seed, seed, seed, seed}
+	for _ in 0 ..< 15 do FSR8_u8(&rng)
+	return rng
+}
+FSR8_u8 :: proc(r: ^FSR8) -> u8 {
+	s := r[0] - r[1]
+	r[0] = r[1] + r[4]
+	r[1] = swap8(r[2])
+	r[2] = r[3] + s
+	r[3] = bits.rotate_left8(s, 5)
+	r[4] += 0x9f
+	return r[0]
+}
+swap8 :: proc(v: u8) -> u8 {
+	return ((v & 0xC0) >> 6) | ((v & 0x30) >> 2) | ((v & 0x0C) << 2) | ((v & 0x03) << 6)
+}
+FSR8 :: [5]u8
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0
+test set = expanded, folding = extra
+
+length= 4 megabytes (2^22 bytes)
+  [Low4/32]BCFN(0+0,13-7,T)         R=  -5.8  p =1-5.2e-5   unusual
+
+length= 16 gigabytes (2^34 bytes)
+  DC7-9x1Bytes-1:even               R=  +9.2  p =  3.6e-5   mildly suspicious
+  DC7-9x1Bytes-1:odd                R=  +8.3  p =  1.1e-4   unusual
+  DC7-9x1Bytes-1:both               R=  +9.8  p =  1.8e-5   mildly suspicious
+  DC7-9x1Bytes-1:indep              R= +17.3  p =   8e-8    very suspicious
+  FPF-14+6/64:all                   R=  -8.2  p =1-1.2e-7   suspicious
+  FPF-14+6/32:all                   R=  -8.1  p =1-1.6e-7   suspicious
+  FPF-14+6/16:all                   R=  -7.5  p =1-7.1e-7   mildly suspicious
+  FPF-14+6/4:all                    R=  -8.5  p =1-7.5e-8   suspicious
+
+length= 32 gigabytes (2^35 bytes)
+  DC7-9x1Bytes-1:even               R= +18.1  p =  1.0e-9    VERY SUSPICIOUS
+  DC7-9x1Bytes-1:odd                R= +17.5  p =  2.0e-9    VERY SUSPICIOUS
+  DC7-9x1Bytes-1:both               R= +19.1  p =  7.7e-13    FAIL
+  DC7-9x1Bytes-1:indep              R= +38.7  p =   1e-16     FAIL !
+  FPF-14+6/64:all                   R= -14.5  p =1-8.0e-14    FAIL
+  FPF-14+6/32:all                   R= -12.1  p =1-2.0e-11   VERY SUSPICIOUS
+  FPF-14+6/16:all                   R= -14.1  p =1-2.3e-13    FAIL
+  FPF-14+6/4:all                    R= -16.1  p =1-2.0e-15    FAIL
+  [Low4/16]FPF-14+6/64:all          R=  -6.2  p =1-1.1e-5   unusual
+  [Low4/16]FPF-14+6/32:all          R= -10.2  p =1-1.5e-9   very suspicious
+  [Low4/16]FPF-14+6/16:all          R=  -9.6  p =1-5.1e-9   very suspicious
+  [Low4/16]FPF-14+6/4:all           R=  -9.3  p =1-1.1e-8   very suspicious
+  [Low8/32]FPF-14+6/64:all          R=  -8.6  p =1-5.7e-8   very suspicious
+  [Low8/32]FPF-14+6/32:all          R=  -8.3  p =1-1.0e-7   suspicious
+  [Low8/32]FPF-14+6/16:all          R=  -9.7  p =1-4.8e-9   very suspicious
+  [Low8/32]FPF-14+6/4:all           R=  -9.8  p =1-3.6e-9   very suspicious
+  [Low8/64]FPF-14+6/64:all          R=  -5.8  p =1-3.0e-5   unusual

@@ -18,7 +18,7 @@ Odin_u64 :: proc(r: ^Odin) -> u64 {
 	// return (xor_shifted >> rot) | (xor_shifted << ((-rot) & 63))
 	hi5 := r.state >> 59
 	mix := ((hi5 + 5) ~ r.state) * 12605985483714917081
-	r.state = r.state * 6364136223846793005 + (r.inc | 1) // xor here is useless
+	r.state = r.state * 6364136223846793005 + (r.inc | 1) // Or here is useless
 	return (mix >> hi5) | (mix << (-hi5 & 63))
 }
 Odin :: struct {

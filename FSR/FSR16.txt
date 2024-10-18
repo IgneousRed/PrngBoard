@@ -1,0 +1,46 @@
+FSR16_init :: proc(seed: u16) -> FSR16 {
+	rng := FSR16{seed, seed, seed, seed, seed}
+	for _ in 0 ..< 15 do FSR16_u16(&rng)
+	return rng
+}
+FSR16_u16 :: proc(r: ^FSR16) -> u16 {
+	s := r[0] - r[1]
+	r[0] = r[1] + r[4]
+	r[1] = swap16(r[2])
+	r[2] = r[3] + s
+	r[3] = bits.rotate_left16(s, 5)
+	r[4] += lib.ODD_PHI_16
+	return r[0]
+}
+FSR16 :: [5]u16
+swap16 :: proc(v: u16) -> u16 {
+	return(
+		((v & 0xF000) >> 12) |
+		((v & 0x0F00) >> 04) |
+		((v & 0x00F0) << 04) |
+		((v & 0x000F) << 12) \
+	)
+}
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000000
+test set = expanded, folding = extra
+
+length= 1 kilobyte (2^10 bytes)
+  DC7-9x1Bytes-1:both               R=  -3.2  p =1-9.8e-3   unusual
+
+length= 8 kilobytes (2^13 bytes)
+  [Low1/8]FPF-14+6/64:all           R= +29.7  p~=   8e-11    VERY SUSPICIOUS
+  [Low4/32]FPF-14+6/64:all          R= +29.7  p~=   8e-11    VERY SUSPICIOUS
+  [Low8/64]FPF-14+6/64:all          R= +29.7  p~=   8e-11    VERY SUSPICIOUS
+
+length= 16 kilobytes (2^14 bytes)
+  [Low1/8]FPF-14+6/64:all           R= +17.6  p~=   5e-5    unusual
+
+length= 8 gigabytes (2^33 bytes)
+  [Low1/64]BCFN(0+0,13-2,T)         R= +11.5  p =  1.8e-5   unusual
+
+length= 16 terabytes (2^44 bytes)
+  BCFN(0+0,13-0,T)                  R= +25.3  p =  4.5e-13    FAIL

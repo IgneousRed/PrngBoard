@@ -1,5 +1,6 @@
 package main
 
+import "FSR"
 import "MWC"
 import "MWCP"
 import "Odin"
@@ -11,6 +12,7 @@ import "lib"
 
 main :: proc() {
 	// ---------------- Test Time ----------------
+	// lib.test_time(FSR.FSR64_init, FSR.FSR64_u64) // 0.549 ns
 	// lib.test_time(MWC.MWC64_init, MWC.MWC64_u64) // 0.565 ns
 	// lib.test_time(MWCP.MWCP64_init, MWCP.MWCP64_u64) // 0.610 ns
 	// lib.test_time(SFC.SFC64_init, SFC.SFC64_u64) // 0.992 ns
@@ -19,6 +21,7 @@ main :: proc() {
 	// lib.test_time(Odin.Odin_init, Odin.Odin_u64) // 0.916 ns
 
 	// ---------------- Test Rng ----------------
+	// lib.test_rng(FSR.FSR64_init, FSR.FSR64_u64, 0)
 	// lib.test_rng(MWC.MWC64_init, MWC.MWC64_u64, 0)
 	// lib.test_rng(MWCP.MWCP64_init, MWCP.MWCP64_u64, 0)
 	// lib.test_rng(SFC.SFC64_init, SFC.SFC64_u64, 0)

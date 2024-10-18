@@ -1,0 +1,27 @@
+FSR64_init :: proc(seed: u64) -> FSR64 {
+	rng := FSR64{seed, seed, seed, seed, seed}
+	for _ in 0 ..< 15 do FSR64_u64(&rng)
+	return rng
+}
+FSR64_u64 :: proc(r: ^FSR64) -> u64 {
+	s := r[0] - r[1]
+	r[0] = r[1] + r[4]
+	r[1] = bits.byte_swap(r[2])
+	r[2] = r[3] + s
+	r[3] = bits.rotate_left64(s, 15)
+	r[4] += lib.ODD_PHI_64
+	return r[0]
+}
+FSR64 :: [5]u64
+
+----------------------------------------------------------------
+
+RNG_test using PractRand version 0.95
+RNG = RNG_stdin, seed = 0x0000000000000000
+test set = expanded, folding = extra
+
+length= 1 kilobyte (2^10 bytes)
+  FPF-14+6/64:all                   R= +15.0  p~=   4e-4    unusual
+
+length= 32 terabytes (2^45 bytes)
+  no anomalies in 2791 test result(s)
