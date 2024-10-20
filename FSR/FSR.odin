@@ -30,11 +30,11 @@ FSR64_init :: proc(seed: u64) -> FSR64 {
 	return rng
 }
 FSR64_u64 :: proc(r: ^FSR64) -> u64 {
-	s := r[0] - r[1]
+	t := r[0] - r[1]
 	r[0] = r[1] + r[4]
 	r[1] = bits.byte_swap(r[2])
-	r[2] = r[3] + s
-	r[3] = bits.rotate_left64(s, 15)
+	r[2] = r[3] + t
+	r[3] = bits.rotate_left64(t, 15)
 	r[4] += lib.ODD_PHI_64
 	return r[0]
 }
@@ -48,11 +48,11 @@ FSR32_init :: proc(seed: u32) -> FSR32 {
 	return rng
 }
 FSR32_u32 :: proc(r: ^FSR32) -> u32 {
-	s := r[0] - r[1]
+	t := r[0] - r[1]
 	r[0] = r[1] + r[4]
 	r[1] = bits.byte_swap(r[2])
-	r[2] = r[3] + s
-	r[3] = bits.rotate_left32(s, 21)
+	r[2] = r[3] + t
+	r[3] = bits.rotate_left32(t, 21)
 	r[4] += lib.ODD_PHI_32
 	return r[0]
 }
@@ -66,11 +66,11 @@ FSR16_init :: proc(seed: u16) -> FSR16 {
 	return rng
 }
 FSR16_u16 :: proc(r: ^FSR16) -> u16 {
-	s := r[0] - r[1]
+	t := r[0] - r[1]
 	r[0] = r[1] + r[4]
 	r[1] = swap16(r[2])
-	r[2] = r[3] + s
-	r[3] = bits.rotate_left16(s, 5)
+	r[2] = r[3] + t
+	r[3] = bits.rotate_left16(t, 5)
 	r[4] += lib.ODD_PHI_16
 	return r[0]
 }
@@ -90,11 +90,11 @@ FSR8_init :: proc(seed: u8) -> FSR8 {
 	return rng
 }
 FSR8_u8 :: proc(r: ^FSR8) -> u8 {
-	s := r[0] - r[1]
+	t := r[0] - r[1]
 	r[0] = r[1] + r[4]
 	r[1] = swap8(r[2])
-	r[2] = r[3] + s
-	r[3] = bits.rotate_left8(s, 5)
+	r[2] = r[3] + t
+	r[3] = bits.rotate_left8(t, 5)
 	r[4] += lib.ODD_PHI_8
 	return r[0]
 }

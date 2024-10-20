@@ -2,9 +2,10 @@
 This repository contains benchmarks of various Pseudo Random Number Generators.
 
 ## PRNGs tested
+- **FSR**
 - **MWC**
 - **MWCP** MWC with output permutation
-- **SFC** slightly modified SFC
+- **SFC**
 - **SFCK** slightly modified SFC
 - **WYR** slightly modified WYRand
 - **Odin** based on PCG (could not find exact PCG)
@@ -23,6 +24,13 @@ This repository contains benchmarks of various Pseudo Random Number Generators.
 Randomness is measured by how many outputs does the testing software need to detect a statistical improbability.
 The software used is PractRand (to my knowleadge ammong the best, and at the same time the most pleasent to use).
 Used PractRand settings are Extended + Max Fold (the most rigorous)
+
+### **FSR:**
+Probably scales worse than liniarly
+- **40bit state, 8bit output:** 2^35 bytes
+- **80bit state, 16bit output:** 2^44 bytes
+- **160bit state, 32bit output:** >2^45 bytes
+- **320bit state, 64bit output:** >2^45 bytes
 
 ### **MWC:**
 Probably scales liniarly
@@ -65,6 +73,9 @@ Probably scales liniarly
 I am not into Cryptography, so I can only guess.
 PRs VERY much welcome.
 
+### **FSR**
+Not Cryptographicly Safe, but probably annoying.
+
 ### **MWC**
 Not Cryptographicly Safe, probably predictable in 3-4 outputs.
 
@@ -88,6 +99,9 @@ Nanoseconds per Operations.
 PRs for other CPUs needed!
 At some point I should investigate "prof/spall" from the core library.
 
+### **FSR64:**
+- **Mac M2 Pro:** 0.549 ns/op
+
 ### **MWC64:**
 - **Mac M2 Pro:** 0.565 ns/op
 
@@ -108,6 +122,9 @@ At some point I should investigate "prof/spall" from the core library.
 
 ## Size
 
+### **FSR**
+WordBytes * 5
+
 ### **MWC**
 WordBytes * 4
 
@@ -127,6 +144,9 @@ WordBytes
 WordBytes * 2
 
 ## Applicability
+
+### **FSR**
+Great on desktop CPUs. Its constant can be peppered.
 
 ### **MWC**
 Great on modern CPUs, not so much on CPUs with slow multiply. Can have an arbitrary long period. Can't easily be peppered.
