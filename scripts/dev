@@ -1,0 +1,142 @@
+#!/bin/sh
+# Canonical project bootstrap. Only Nix and standard Unix tools are prerequisites.
+set -eu
+
+fail() {
+    printf '%s\n' "dev: $*" >&2
+    exit 2
+}
+
+[ "$#" -gt 0 ] || fail 'usage: scripts/dev [--profile NAME] COMMAND [ARG ...] | --eval ATTRIBUTE [NIX_EVAL_ARG ...]'
+profile=dev
+if [ "$1" = --profile ]; then
+    [ "$#" -ge 3 ] || fail '--profile needs a profile name and command'
+    profile=$2
+    case "$profile" in
+        ''|*[!a-z0-9-]*|-*|*-) fail 'invalid environment profile name' ;;
+    esac
+    shift 2
+fi
+evaluation=
+if [ "$1" = --eval ]; then
+    shift
+    [ "$#" -gt 0 ] && [ -n "$1" ] || fail '--eval requires an attribute'
+    evaluation=$1
+    shift
+fi
+project=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)
+
+nix=$(command -v nix || true)
+if [ -z "$nix" ] && [ -x /nix/var/nix/profiles/default/bin/nix ]; then
+    nix=/nix/var/nix/profiles/default/bin/nix
+fi
+[ -n "$nix" ] || fail 'Nix is required. Install Nix once, then rerun this command; see the project setup guide.'
+case "$nix" in
+    /*) ;;
+    *) nix="$(pwd -P)/$nix" ;;
+esac
+work="$project/.work/nix"
+mkdir -p "$work"
+staging=$(mktemp -d "$work/stage.XXXXXX")
+source="$staging/source"
+mkdir "$source"
+child=
+cleanup() {
+    if [ -n "$child" ]; then
+        kill -TERM "$child" 2>/dev/null || true
+        wait "$child" 2>/dev/null || true
+    fi
+    rm -rf "$staging"
+}
+forward_signal() {
+    trap '' HUP INT TERM
+    if [ -n "$child" ]; then
+        kill -s "$1" "$child" 2>/dev/null || true
+        wait "$child" 2>/dev/null || true
+        child=
+    fi
+    exit "$2"
+}
+trap cleanup 0
+trap 'forward_signal HUP 129' HUP
+trap 'forward_signal INT 130' INT
+trap 'forward_signal TERM 143' TERM
+
+stage() {
+    relative=$1
+    case "/$relative/" in
+        *//*|*/../*|*/./*|*/.git/*|*/.private/*|*/.local/*|*/.work/*|*/.vendor/*|*/AGENTS.md/*|*/.tmp/*|*/.venv/*|*/node_modules/*|*/results/*)
+            fail "invalid source input: $relative" ;;
+    esac
+    [ -e "$project/$relative" ] || fail "missing source input: $relative"
+    # Escaping symlinks and generated trees must never enter the flake snapshot.
+    invalid=$(find "$project/$relative" \( -type l -o -name .git -o -name .private -o -name .local -o -name .work -o -name .vendor -o -name AGENTS.md -o -name .tmp -o -name .venv -o -name node_modules -o -name results \) -print)
+    [ -z "$invalid" ] || fail "source input contains symlinks or generated data: $relative"
+    case "$relative" in
+        */*) mkdir -p "$source/${relative%/*}" ;;
+    esac
+    if [ -d "$project/$relative" ]; then
+        mkdir -p "$source/$relative"
+        cp -R "$project/$relative/." "$source/$relative/"
+    else
+        cp "$project/$relative" "$source/$relative"
+    fi
+}
+
+[ -f "$project/flake.nix" ] || fail 'missing flake.nix'
+[ -f "$project/flake.lock" ] || fail 'missing flake.lock; use the reviewed project lock'
+[ -d "$project/nix" ] || fail 'missing nix/ definitions'
+[ -f "$project/nix/source-files" ] || fail 'missing nix/source-files allowlist'
+stage flake.nix
+stage flake.lock
+stage nix
+while IFS= read -r relative || [ -n "$relative" ]; do
+    case "$relative" in
+        ''|\#*) continue ;;
+        flake.nix|flake.lock|nix|nix/*) fail "input is already staged automatically: $relative" ;;
+    esac
+    stage "$relative"
+done < "$project/nix/source-files"
+
+if [ -n "$evaluation" ]; then
+    (cd "$source" && "$nix" --extra-experimental-features 'nix-command flakes' \
+        eval --no-update-lock-file "path:.#$evaluation" "$@")
+    exit 0
+fi
+
+# Use a relative flake reference so spaces and URI characters in the original
+# project path are not interpreted as part of a command-line flake URL.
+(cd "$source" && "$nix" --extra-experimental-features 'nix-command flakes' \
+    build --no-update-lock-file --out-link "$staging/environment" "path:.#$profile-environment")
+environment=$(CDPATH= cd -- "$staging/environment" && pwd -P)
+case "$environment" in
+    /*) ;;
+    *) fail 'PROJECT_NIX_ENVIRONMENT must be an absolute realized environment path' ;;
+esac
+[ -x "$environment/bin/python3" ] || fail 'the realized environment must provide bin/python3'
+[ -f "$environment/share/project-environment.json" ] || fail 'the realized environment is missing share/project-environment.json'
+# Editable Python startup hooks run before the executor can replace stale markers.
+export PROJECT_ROOT="$project" PROJECT_NIX_ENVIRONMENT="$environment"
+# Publish the last-selected root only after this invocation owns its own root.
+# Nix refuses a dangling link. This generated entry is owned by this launcher;
+# removing the link never removes a closure or another invocation's private root.
+view="$work/environment"
+[ "$profile" = dev ] || view="$work/$profile-environment"
+if [ -L "$view" ] && [ ! -e "$view" ]; then
+    rm -- "$view"
+fi
+"$nix" --extra-experimental-features 'nix-command flakes' build \
+    --no-update-lock-file --out-link "$view" "$environment"
+rm -rf "$source"
+# A lightweight parent holds this invocation's root until its child has exited.
+# Preserve stdin explicitly: POSIX asynchronous commands otherwise read /dev/null.
+exec 3<&0
+"$environment/bin/python3" -I "$project/scripts/environment-exec.py" \
+    "$project" "$environment" "$nix" "$@" <&3 3<&- &
+child=$!
+exec 3<&-
+set +e
+wait "$child"
+status=$?
+child=
+exit "$status"

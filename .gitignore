@@ -1,0 +1,16 @@
+# Exe
+prng-board
+
+# Config
+ols.json
+
+# Mac OS
+.DS_Store
+
+/.work/
+/.private/
+/.local/
+/.vendor/
+
+# Working instructions are private at every depth.
+AGENTS.md

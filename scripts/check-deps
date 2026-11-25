@@ -1,0 +1,86 @@
+#!/bin/sh
+set -eu
+fail() {
+    printf '%s\n' "check-deps: $*" >&2
+    exit 2
+}
+project_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)
+case "$(uname -s):$(uname -m)" in
+    Darwin:arm64) system=aarch64-darwin ;;
+    Linux:x86_64) system=x86_64-linux ;;
+    Linux:aarch64|Linux:arm64) system=aarch64-linux ;;
+    *) fail 'no declared dependency-check interface for this host' ;;
+esac
+interface="lib.dependencyCheck.$system"
+nix=$(command -v nix || true)
+if [ -z "$nix" ] && [ -x /nix/var/nix/profiles/default/bin/nix ]; then
+    nix=/nix/var/nix/profiles/default/bin/nix
+fi
+[ -n "$nix" ] || fail 'Nix is required for the pinned checker Python'
+nix_store="${nix%/*}/nix-store"
+[ -x "$nix_store" ] || fail 'Nix nix-store is required to retain the checker Python'
+work="$project_root/.work/nix"
+mkdir -p "$work"
+invocation=$(mktemp -d "$work/check-deps.XXXXXXXX")
+trap 'rm -rf -- "$invocation"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+lifetime_root="$invocation/python"
+preferred=$("$project_root/scripts/dev" --eval "$interface" \
+    --apply 'value: value.preferredPython or ""' --raw \
+    --option allow-import-from-derivation false) || fail 'cannot evaluate the preferred checker Python'
+case "$preferred" in
+    ''|/*) ;;
+    *) fail 'the preferred checker Python must be an absolute executable path' ;;
+esac
+retain() {
+    "$nix_store" --add-root "$lifetime_root" --indirect --realise "$1" \
+        --option max-jobs 0 --option builders '' >/dev/null
+}
+resolve_python() {
+    [ -x "$1" ] || return 1
+    resolved=$("$nix_store" --query --resolve "$1" 2>/dev/null) || return 1
+    "$nix_store" --check-validity "$resolved" 2>/dev/null || return 1
+    printf '%s\n' "$resolved"
+}
+python=
+selected=
+if [ -n "$preferred" ] && selected=$(resolve_python "$preferred"); then
+    if retain "$selected"; then
+        python=$preferred
+    fi
+fi
+if [ -z "$python" ]; then
+    python=$("$project_root/scripts/dev" --eval "$interface.python" --raw \
+        --option allow-import-from-derivation false) || fail 'cannot evaluate the pinned checker Python'
+    case "$python" in
+        /*) ;;
+        *) fail 'the pinned checker Python must be an absolute executable path' ;;
+    esac
+    if selected=$(resolve_python "$python"); then
+        retain "$selected" || fail 'cannot retain the pinned checker Python'
+    else
+        derivation=$("$project_root/scripts/dev" --eval "$interface.interpreter.drvPath" --raw \
+            --option allow-import-from-derivation false) || fail 'cannot evaluate the pinned Python derivation'
+        case "$derivation" in
+            /*.drv) ;;
+            *) fail 'the pinned Python derivation must be an absolute .drv path' ;;
+        esac
+        "$nix" --extra-experimental-features 'nix-command flakes' build \
+            --no-update-lock-file --max-jobs 0 --builders '' \
+            --out-link "$lifetime_root" "$derivation^out" \
+            || fail 'cannot download the pinned Python binary; source builds are disabled'
+        selected=$(resolve_python "$python") || fail 'the pinned Python executable is unavailable after download'
+    fi
+fi
+metadata=$("$project_root/scripts/dev" --eval "$interface.metadata" --json \
+    --option allow-import-from-derivation false) || fail 'cannot evaluate dependency update metadata'
+unset PYTHONHOME PYTHONPATH VIRTUAL_ENV
+if printf '%s\n' "$metadata" | "$python" -I "$project_root/scripts/check-deps.py" --metadata-stdin "$@"; then
+    "$nix_store" --add-root "$work/check-deps-python" --indirect --realise "$selected" \
+        --option max-jobs 0 --option builders '' >/dev/null \
+        || fail 'cannot retain the verified checker Python'
+else
+    exit "$?"
+fi

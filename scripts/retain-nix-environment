@@ -1,0 +1,31 @@
+#!/bin/sh
+# Call only when publishing a NEW retained capture; old captures stay untouched.
+set -eu
+
+fail() {
+    printf '%s\n' "retain-nix-environment: $*" >&2
+    exit 2
+}
+
+[ "$#" -eq 1 ] || fail 'usage: scripts/retain-nix-environment NEW_CAPTURE_ROOT_LINK'
+[ -n "${PROJECT_NIX_ENVIRONMENT:-}" ] || fail 'run the capture through scripts/dev first'
+case "$PROJECT_NIX_ENVIRONMENT" in
+    /*) ;;
+    *) fail 'PROJECT_NIX_ENVIRONMENT must be absolute' ;;
+esac
+[ -f "$PROJECT_NIX_ENVIRONMENT/share/project-environment.json" ] || fail 'the active project environment is unavailable'
+parent=$(CDPATH= cd -- "$(dirname -- "$1")" && pwd -P)
+name=$(basename -- "$1")
+case "$name" in
+    ''|.|..) fail 'select one new capture root link' ;;
+esac
+target="$parent/$name"
+if [ -e "$target" ] || [ -L "$target" ]; then
+    fail 'the capture root already exists; existing captures are not modified'
+fi
+nix_store=$(command -v nix-store || true)
+if [ -z "$nix_store" ] && [ -x /nix/var/nix/profiles/default/bin/nix-store ]; then
+    nix_store=/nix/var/nix/profiles/default/bin/nix-store
+fi
+[ -n "$nix_store" ] || fail 'Nix nix-store is required to retain the environment closure'
+exec "$nix_store" --add-root "$target" --indirect --realise "$PROJECT_NIX_ENVIRONMENT"

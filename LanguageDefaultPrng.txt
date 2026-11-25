@@ -1,0 +1,37 @@
+When considering which PRNG to designate as the default in a programming language,
+users shouldn't be required to explore whether the default PRNG is a good fit for their use case.
+This means it shouldn't exhibit surprising edge cases and should be competitive in most aspects.
+
+While specific needs may necessitate more in-depth exploration,
+  most users shouldn't have to become experts to determine if they need a different PRNG.
+
+Therefore, I propose that a default PRNG should possess the following properties,
+  listed in order of importance:
+1. Decent Randomness:
+  Clearly, it must be random enough.
+  I would dismiss any 64-bit state PRNG incapable of enduring 2^40 bytes of "PractRand -tf 2 -te 1",
+    or 2^25 bytes for a 32-bit state PRNG, simply because better alternatives exist.
+  Even a terrible RNG can pass tests if given enough state.
+    RNGs should be scaled down (multiple times) then tested.
+    This way we see how well additional bits add to it's randomness.
+2. Non-Trivial Predictability:
+  I don't mean uncrackable. Predictability is a spectrum.
+  Cryptographically Secure PRNGs are necessary when dealing with sensitive information.
+  While certain applications may not require this property, such as physics simulations,
+    there is no good reason to leave programs extremely vulnerable.
+3. Decent Speed:
+  Given the need to uphold the first two properties, we can't expect the best.
+  Nevertheless, it should be competitive.
+4. Small State Size:
+  It helps in cases where an PRNG is needed per thread, or in general when doing a cold read.
+  People have used Mersenne Twister for a long time with minimal issues,
+    but it would be preferable for a PRNG to take the least amount of space.
+5. Simplicity in Implementation:
+  The simpler it is, the harder it is to mess up.
+  PRNG bugs are more challenging to discover compared to other algorithms, for obvious reasons.
+
+Some may argue that predictability is not that important. Let me demonstrate why I think it is:
+  For example, say someone implemented a QuickSort with a random pivot.
+  They shouldn't expect that an attacker could easily devise adversarial data.
+  Thus causing their algorithm's speed to degrade to O(n^2) instead of O(n log n).
+  This behaviour is not acceptable for the Default PRNG.
