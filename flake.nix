@@ -8,8 +8,15 @@
       forSystem = system:
         let
           pkgs = import nixpkgs { inherit system; };
-          toolchain = import (if system == "aarch64-darwin" then ./nix/llvm23/llvm23-toolchain.nix else ./nix/toolchain.nix) { inherit pkgs; };
-          python = toolchain.python or pkgs.python315;
+          dependencies = import ./nix/llvm23/native-dependencies.nix { inherit pkgs; };
+          toolchain = if system == "aarch64-darwin" then
+            import ./nix/llvm23/llvm23-toolchain.nix { inherit pkgs; }
+          else import ./nix/toolchain.nix { pkgs = pkgs // {
+            raylib = pkgs.raylib.override { inherit (dependencies) glfw cmake; };
+          }; };
+          python = toolchain.python or (pkgs.python315.override {
+            inherit (dependencies) zstd zlib expat sqlite readline;
+          });
           environmentMetadata = pkgs.writeText "project-environment.json" (builtins.toJSON {
             schema = 1;
             variables = {

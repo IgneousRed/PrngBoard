@@ -7,8 +7,25 @@ import "Odin"
 import "SFC"
 import "SFCK"
 import "WYR"
-import "core:fmt"
+// import "core:fmt" // Enable with the balanced-prime printing example below.
 import "lib"
+
+// Keep the inactive selectors' APIs checked without running a campaign.
+#assert(type_of(FSR.FSR64_init) == proc(seed: u64) -> FSR.FSR64)
+#assert(type_of(FSR.FSR64_u64) == proc(r: ^FSR.FSR64) -> u64)
+#assert(type_of(MWC.MWC64_init) == proc(seed: u64) -> MWC.MWC64)
+#assert(type_of(MWC.MWC64_u64) == proc(r: ^MWC.MWC64) -> u64)
+#assert(type_of(MWCP.MWCP64_init) == proc(seed: u64) -> MWCP.MWCP64)
+#assert(type_of(MWCP.MWCP64_u64) == proc(r: ^MWCP.MWCP64) -> u64)
+#assert(type_of(Odin.Odin_init) == proc(seed: u64) -> Odin.Odin)
+#assert(type_of(Odin.Odin_u64) == proc(r: ^Odin.Odin) -> u64)
+#assert(type_of(SFC.SFC64_init) == proc(seed: u64) -> SFC.SFC64)
+#assert(type_of(SFC.SFC64_u64) == proc(r: ^SFC.SFC64) -> u64)
+#assert(type_of(SFCK.SFCK64_init) == proc(seed: u64) -> SFCK.SFCK64)
+#assert(type_of(SFCK.SFCK64_u64) == proc(r: ^SFCK.SFCK64) -> u64)
+#assert(type_of(WYR.WYR64_init) == proc(seed: u64) -> WYR.WYR64)
+#assert(type_of(WYR.WYR64_u64) == proc(r: ^WYR.WYR64) -> u64)
+#assert(type_of(lib.balanced_prime) == proc(bits: u8) -> u64)
 
 main :: proc() {
 	// ---------------- Test Time ----------------

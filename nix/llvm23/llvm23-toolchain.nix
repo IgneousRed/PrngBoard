@@ -1,7 +1,12 @@
 { pkgs }:
 let
   inherit (pkgs) lib;
-  native = import ./llvm23-package.nix { inherit pkgs; python3 = python; };
+  dependencies = import ./native-dependencies.nix { inherit pkgs; };
+  native = import ./llvm23-package.nix {
+    inherit pkgs;
+    python3 = python;
+    inherit (dependencies) zstd cctools sigtool perl;
+  };
   llvmTools = pkgs.runCommand "llvm-tools-23.1.6" { version = "23.1.6"; } ''
     mkdir -p "$out/bin"
     for program in ${native}/bin/*; do
@@ -60,7 +65,7 @@ let
     lld = lldTools;
   };
   shared = import ./toolchain.nix { inherit llvmPackages; pkgs = pkgs // {
-    raylib = pkgs.raylib.override { inherit stdenv; };
+    raylib = pkgs.raylib.override { inherit stdenv; inherit (dependencies) glfw cmake; };
     odin = pkgs.odin.overrideAttrs (old:
       let anchor = "--set-default ODIN_ROOT $out/share";
       in assert lib.assertMsg (lib.hasInfix anchor old.installPhase)
@@ -75,7 +80,10 @@ let
     ] old.installPhase;
     });
   }; };
-  python = (pkgs.python315.override { inherit stdenv; }).overrideAttrs (old:
+  python = (pkgs.python315.override {
+    inherit stdenv;
+    inherit (dependencies) zstd zlib expat sqlite readline;
+  }).overrideAttrs (old:
     assert lib.assertMsg (builtins.elem "--with-lto" old.configureFlags)
       "Recheck Python's configured LTO policy before updating this recipe";
     {
@@ -86,4 +94,12 @@ let
       '';
     });
   git = import ./git-package.nix { inherit pkgs python; };
-in shared // { inherit llvmPackages native rawBintools python sdk git; }
+  nodejs = pkgs.nodejs_26.override {
+    nodejs-slim = pkgs.nodejs-slim_26.override {
+      python3 = python;
+      darwin = pkgs.darwin // { inherit (dependencies) sigtool; };
+      inherit (dependencies) zstd zlib libffiReal sqlite icu ada simdjson simdutf
+        llhttp nbytes nghttp2 gtest hdrhistogram_c merve;
+    };
+  };
+in shared // { inherit llvmPackages native rawBintools python sdk git nodejs dependencies; }

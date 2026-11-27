@@ -226,8 +226,14 @@ History replacement changes commit identities: update pins through their owners
 rather than assuming old SHAs remain supported. Hosted caches and other clones
 are outside the guarantees of an owned-ref rewrite.
 
-Debug builds and bounded startup have been verified on Apple Silicon macOS 26.
-The maximal warnings-as-errors check currently rejects the pre-existing
-`core:intrinsics` imports. This is a known verification limitation, not a passing
-vet result. Linux runtime verification and fresh statistical/performance
-measurements are not implied.
+Debug builds and bounded startup have been verified on Apple Silicon macOS 27.2.1.
+The public harness passes the maximal warnings-as-errors check. The former
+`core:intrinsics` imports now use the compiler's `base:intrinsics` path; procedure
+bodies are unchanged. Compile-time selector API checks keep the default harness
+idle without unused imports. Enable the commented `core:fmt` import as well when
+selecting the balanced-prime printing example.
+
+See [dependency provenance and compatibility](docs/dependencies.md) and the
+[bounded smoke checks](docs/testing.md#bounded-setup-and-functional-checks).
+Linux runtime verification remains TODO; setup checks do not establish fresh
+statistical or performance measurements.

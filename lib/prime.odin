@@ -1,7 +1,7 @@
 #+feature dynamic-literals
 package lib
 
-import "core:intrinsics"
+import "base:intrinsics"
 
 // -------------------------------- Data --------------------------------
 

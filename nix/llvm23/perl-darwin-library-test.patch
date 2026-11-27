@@ -1,0 +1,24 @@
+--- a/ext/DynaLoader/t/DynaLoader.t
++++ b/ext/DynaLoader/t/DynaLoader.t
+@@ -113,7 +113,11 @@
+ # ... dl_findfile()
+ SKIP: {
+     my @files = ();
+-    eval { @files = DynaLoader::dl_findfile("c") };
++    # Modern Darwin keeps libc in the dyld cache rather than a regular file.
++    # Exercise the same file-discovery API against the real shared libperl
++    # built by this tree; the XS load/unload assertions below remain unchanged.
++    my @library = $^O eq 'darwin' ? ("-L../..", "perl") : ("c");
++    eval { @files = DynaLoader::dl_findfile(@library) };
+     is( $@, '', "calling dl_findfile()" );
+     # Some platforms are known to not have a "libc"
+     # (not at least by that name) that the dl_findfile()
+@@ -126,7 +130,7 @@
+ 	unless -d '/usr' && -f '/bin/ls';
+     skip( "dl_findfile test not always appropriate when cross-compiling", 1 )
+         if $Config{usecrosscompile};
+-    cmp_ok( scalar @files, '>=', 1, "array should contain one result or more: libc => (@files)" );
++    cmp_ok( scalar @files, '>=', 1, "array should contain one result or more: @library => (@files)" );
+ }
+ 
+ # Now try to load well known XS modules

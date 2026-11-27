@@ -2,6 +2,7 @@
 """Report upstream dependency updates without modifying project locks."""
 
 import argparse
+from http.client import HTTPException
 import json
 import os
 from pathlib import Path
@@ -44,7 +45,7 @@ def fetch(url, accept="application/json"):
             return response.read()
     except HTTPError as error:
         raise ValueError(f"upstream HTTP {error.code}") from error
-    except (URLError, OSError, TimeoutError) as error:
+    except (URLError, OSError, TimeoutError, HTTPException) as error:
         raise ValueError("upstream request unavailable: " + str(error.reason if isinstance(error, URLError) else error)) from error
 
 

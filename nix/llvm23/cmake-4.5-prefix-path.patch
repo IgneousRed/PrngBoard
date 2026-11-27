@@ -1,0 +1,24 @@
+--- a/Source/cmFindBase.cxx
++++ b/Source/cmFindBase.cxx
+@@ -310,6 +310,11 @@
+   // Add CMAKE_*_PATH environment variables
+   std::string var = cmStrCat("CMAKE_", this->CMakePathName, "_PATH");
+   paths.AddEnvPrefixPath("CMAKE_PREFIX_PATH");
++  if (this->CMakePathName != "PROGRAM") {
++    // Like CMAKE_PREFIX_PATH except when searching for programs. Programs need
++    // to be located via PATH
++    paths.AddEnvPrefixPath("NIXPKGS_CMAKE_PREFIX_PATH");
++  }
+   paths.AddEnvPath(var);
+ 
+   if (this->CMakePathName == "PROGRAM") {
+--- a/Source/cmFindPackageCommand.cxx
++++ b/Source/cmFindPackageCommand.cxx
+@@ -2535,6 +2535,7 @@
+ 
+   // And now the general CMake environment variables
+   paths.AddEnvPath("CMAKE_PREFIX_PATH");
++  paths.AddEnvPath("NIXPKGS_CMAKE_PREFIX_PATH");
+   if (this->DebugModeEnabled()) {
+     debugBuffer = cmStrCat(std::move(debugBuffer),
+                            "CMAKE_PREFIX_PATH env variable "

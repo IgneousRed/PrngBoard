@@ -13,6 +13,7 @@ import tempfile
 import unittest
 from unittest import mock
 from email.message import Message
+from http.client import HTTPResponse
 from urllib.error import URLError
 from urllib.request import BaseHandler, HTTPDefaultErrorHandler, HTTPErrorProcessor, OpenerDirector
 from urllib.response import addinfourl
@@ -143,6 +144,50 @@ class DependencyProtocolTests(unittest.TestCase):
              contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(CHECKER.main(["--metadata-stdin"]), 2)
             fetch.assert_not_called()
+
+    def test_truncated_http_response_preserves_complete_cli_reports(self):
+        names = ["first", "middle", "last"]
+        document = {"schema": 1, "dependencies": [
+            {"name": name, "current": "1.0.0", "kind": "npm", "package": name}
+            for name in names
+        ]}
+        for arguments in (["--metadata-stdin", "--json"], ["--metadata-stdin"]):
+            with self.subTest(arguments=arguments):
+                requests = []
+
+                def open_response(request, timeout):
+                    requests.append(request.full_url)
+                    truncated = "/middle/" in request.full_url
+                    body = b'{"version":' if truncated else b'{"version":"1.0.0"}'
+                    length = len(body) + 10 if truncated else len(body)
+                    wire = f"HTTP/1.1 200 OK\r\nContent-Length: {length}\r\n\r\n".encode() + body
+                    socket = mock.Mock()
+                    socket.makefile.return_value = io.BytesIO(wire)
+                    response = HTTPResponse(socket)
+                    response.begin()
+                    return response
+
+                with mock.patch("sys.stdin", io.StringIO(json.dumps(document))), \
+                     mock.patch.object(CHECKER.OPENER, "open", side_effect=open_response), \
+                     contextlib.redirect_stdout(io.StringIO()) as output, \
+                     contextlib.redirect_stderr(io.StringIO()) as errors:
+                    self.assertEqual(CHECKER.main(arguments), 2)
+                self.assertEqual(requests, [f"https://registry.npmjs.org/{name}/latest" for name in names])
+                if "--json" in arguments:
+                    report = json.loads(output.getvalue())
+                    self.assertEqual(report["schema"], 1)
+                    self.assertEqual([item["name"] for item in report["dependencies"]], names)
+                    self.assertEqual([item["status"] for item in report["dependencies"]],
+                                     ["current", "error", "current"])
+                    self.assertIn("upstream request unavailable", report["dependencies"][1]["error"])
+                    self.assertIn("IncompleteRead", report["dependencies"][1]["error"])
+                    self.assertEqual(errors.getvalue(), "")
+                else:
+                    self.assertEqual([line.split()[1].rstrip(":") for line in output.getvalue().splitlines()],
+                                     ["first", "last"])
+                    self.assertIn("ERROR middle: upstream request unavailable", errors.getvalue())
+                    self.assertIn("IncompleteRead", errors.getvalue())
+                self.assertNotIn("Traceback", output.getvalue() + errors.getvalue())
 
 
 class DependencyRedirectTests(unittest.TestCase):

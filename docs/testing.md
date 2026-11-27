@@ -21,3 +21,33 @@ Use [the locked setup](practrand.md) for current tools. Setup checks and bounded
 smoke tests do not establish the historical multi-terabyte claims in README.
 Historical personal campaign durations are not setup prerequisites or current
 runtime estimates. No performance pass/fail threshold is defined by this project.
+
+## Bounded setup and functional checks
+
+The default public harness checks the selectable 64-bit procedure signatures at
+compile time and runs no timing/statistical invocation. The bounded smoke target
+exercises all 23 maintained generator/width variants at three seeds for 1000
+steps each, checking repeatability and state advancement. Its prime and intrinsic
+fixtures use fixed mathematical facts, not output regenerated from a PRNG.
+These checks do not prove algorithm correctness, randomness, period or speed.
+
+```sh
+mkdir -p .work/build
+./scripts/dev odin build scripts/test-generators -thread-count:1 -debug \
+  -vet -vet-tabs -vet-using-param -vet-nil-deref -vet-uninitialized \
+  -vet-atomic-access -strict-style -warnings-as-errors \
+  -vet-unused-procedures -vet-packages:main -out:.work/build/test-generators
+./scripts/dev .work/build/test-generators
+./scripts/dev PractRandTest --self_test
+```
+
+The same maximal compiler flags apply to checking/building the public root.
+Remove generated executables and debug bundles after their last consumer.
+The launcher's inert fixtures and the dependency checker's protocol fixtures run
+without upstream requests:
+
+```sh
+./scripts/dev python3 -B scripts/test-dev.py
+./scripts/dev python3 -B scripts/test_check_deps.py
+./scripts/dev python3 -B scripts/test-publication.py
+```

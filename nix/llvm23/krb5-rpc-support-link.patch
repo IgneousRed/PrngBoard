@@ -1,0 +1,20 @@
+Declare libgssrpc's direct support-library dependency on Darwin.
+
+svc_auth_gssapi.c calls secure_getenv, mapped to k5_secure_getenv by
+k5-platform.h when the system does not supply it. Darwin's two-level
+namespace requires libgssrpc to link the defining library directly.
+Keep the prerequisite as well as the link flag, as other Kerberos libraries do.
+
+--- a/lib/rpc/Makefile.in
++++ b/lib/rpc/Makefile.in
+@@ -14,8 +14,8 @@
+ 	$(TOPLIBD)/libgssapi_krb5$(SHLIBEXT) \
+ 	$(TOPLIBD)/libkrb5$(SHLIBEXT) \
+ 	$(TOPLIBD)/libk5crypto$(SHLIBEXT) \
+-	$(COM_ERR_DEPLIB)
+-SHLIB_EXPLIBS=-lgssapi_krb5 -lkrb5 -lk5crypto $(COM_ERR_LIB) $(LIBS)
++	$(COM_ERR_DEPLIB) $(SUPPORT_DEPLIB)
++SHLIB_EXPLIBS=-lgssapi_krb5 -lkrb5 -lk5crypto $(COM_ERR_LIB) $(SUPPORT_LIB) $(LIBS)
+ RELDIR=rpc
+ 
+ SRCS = $(srcdir)/auth_none.c \

@@ -1,0 +1,16 @@
+{
+  "provider": "NixOS/nixpkgs",
+  "revision": "f01b3fb6b3149058d21404e7bb80e8d16e5a7ced",
+  "license": "MIT",
+  "files": {
+    "rust-1_100.nix": {
+      "url": "https://raw.githubusercontent.com/NixOS/nixpkgs/f01b3fb6b3149058d21404e7bb80e8d16e5a7ced/pkgs/development/compilers/rust/1_100.nix",
+      "sha256": "13bce6d0dedf03fc156d85a350b6bce7ec416a1f5bab3b39047587f7d6a1829d"
+    },
+    "COPYING": {
+      "url": "https://raw.githubusercontent.com/NixOS/nixpkgs/f01b3fb6b3149058d21404e7bb80e8d16e5a7ced/COPYING",
+      "sha256": "c9cf0650a6820b589f96a92060e0eb937102b808f48cd5e3f35dcba449ea0a41"
+    }
+  },
+  "compatibility": "The locked default/cargo/bootstrap/binary/platform/wrapper APIs are byte-identical to this provider revision. rust-1.100.nix applies the upstream rustc builder stack environment delta through overrideScope without modifying this vendored file."
+}

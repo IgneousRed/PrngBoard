@@ -3,7 +3,7 @@ package lib
 import "core:c"
 import "core:c/libc"
 import "core:fmt"
-import "core:intrinsics"
+import "base:intrinsics"
 import "core:strings"
 import "core:time"
 

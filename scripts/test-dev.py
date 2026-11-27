@@ -331,6 +331,38 @@ exec ''' + shlex.quote(sys.executable) + ''' "$@"
                 self.assertEqual(list((self.project / '.work/nix').glob('stage.*')), [])
                 instruction.unlink()
 
+    def test_nested_parent_symlink_is_rejected_before_nix(self):
+        outside = self.directory / 'synthetic external inputs'
+        (outside / 'nested directory').mkdir(parents=True)
+        (outside / 'config.json').write_text('{"synthetic":true}\n')
+        (outside / 'nested directory/input.txt').write_text('synthetic input\n')
+        (self.project / 'code/shared data').symlink_to(outside, target_is_directory=True)
+        for suffix in ('config.json', 'nested directory'):
+            with self.subTest(suffix=suffix):
+                relative = 'code/shared data/' + suffix
+                self.assertFalse((self.project / relative).is_symlink())
+                (self.project / 'nix/source-files').write_text(relative + '\n')
+                result = self.launch('--eval', 'packages.fixture.version', '--raw')
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn('symlink', result.stderr)
+                self.assertFalse(self.arguments.exists())
+                self.assertFalse(self.snapshot.exists())
+                self.assertEqual(list((self.project / '.work/nix').glob('stage.*')), [])
+
+    def test_outer_project_symlink_preserves_regular_nested_input_with_spaces(self):
+        alias = self.directory / 'project alias with spaces'
+        alias.symlink_to(self.project, target_is_directory=True)
+        result = subprocess.run(
+            [str(alias / 'scripts/dev'), 'python3', '-I', '-c',
+             'import os; print(os.environ["PROJECT_ROOT"])'],
+            cwd=self.directory, env=self.exported, text=True, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), str(self.project))
+        self.assertEqual((self.snapshot / 'metadata with spaces/config.json').read_text(),
+                         '{"kept":true}\n')
+        self.assertFalse((self.project / '.git').exists())
+        self.assertEqual(list((self.project / '.work/nix').glob('stage.*')), [])
+
     def test_invalid_environment_manifests_are_rejected(self):
         for manifest in (
             {'schema': 2, 'variables': {}, 'unset': []},

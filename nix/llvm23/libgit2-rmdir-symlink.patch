@@ -1,0 +1,73 @@
+libgit2 1.9.7: normalize empty-parent paths before rmdir on Darwin.
+
+Local compatibility correction, 2026-11-27. walk_up adds a trailing separator;
+rmdir of a symlink to its parent then returns EINVAL instead of the ENOTDIR
+already handled by this callback. Inspect the entry without following its
+separator-selected target. Preserve every checkout/utility test and add the
+missing-parent symlink regression.
+Source: https://github.com/libgit2/libgit2/tree/v1.9.7
+License: libgit2 GPLv2 with linking exception; see the fetched source's COPYING.
+
+--- a/src/util/futils.c
++++ b/src/util/futils.c
+@@ -829,12 +829,21 @@
+ static int futils__rmdir_empty_parent(void *opaque, const char *path)
+ {
+ 	futils__rmdir_data *data = opaque;
++	git_str normalized = GIT_STR_INIT;
+ 	int error = 0;
+ 
+ 	if (strlen(path) <= data->baselen)
+-		error = GIT_ITEROVER;
+-
+-	else if (p_rmdir(path) < 0) {
++		return GIT_ITEROVER;
++
++	if (git_str_puts(&normalized, path) < 0)
++		return -1;
++
++	/* walk_up supplies a trailing slash; inspect the parent entry itself. */
++	while (normalized.size > (size_t)(git_fs_path_root(normalized.ptr) + 1) &&
++	       normalized.ptr[normalized.size - 1] == '/')
++		git_str_truncate(&normalized, normalized.size - 1);
++
++	if (p_rmdir(normalized.ptr) < 0) {
+ 		int en = errno;
+ 
+ 		if (en == ENOENT || en == ENOTDIR) {
+@@ -849,6 +858,7 @@
+ 		}
+ 	}
+ 
++	git_str_dispose(&normalized);
+ 	return error;
+ }
+ 
+--- a/tests/util/rmdir.c
++++ b/tests/util/rmdir.c
+@@ -118,3 +118,25 @@
+ 
+ 	cl_git_pass(git_futils_rmdir_r(empty_tmp_dir, NULL, GIT_RMDIR_EMPTY_HIERARCHY));
+ }
++
++void test_rmdir__empty_parents_do_not_follow_symlinks(void)
++{
++	git_str link = GIT_STR_INIT, missing = GIT_STR_INIT, target = GIT_STR_INIT;
++	struct stat st;
++
++	cl_git_pass(git_str_joinpath(&link, empty_tmp_dir, "one/two_one/link"));
++	cl_git_pass(git_str_sets(&missing, "one/two_one/link/missing"));
++	cl_git_pass(git_str_joinpath(&target, empty_tmp_dir, "one/retained.txt"));
++	cl_git_mkfile(target.ptr, "retained target");
++	cl_must_pass(p_symlink("..", link.ptr));
++
++	cl_git_pass(git_futils_rmdir_r(missing.ptr, empty_tmp_dir,
++		GIT_RMDIR_REMOVE_FILES | GIT_RMDIR_EMPTY_PARENTS));
++	cl_must_pass(p_lstat(link.ptr, &st));
++	cl_assert(S_ISLNK(st.st_mode));
++	cl_assert(git_fs_path_isfile(target.ptr));
++
++	git_str_dispose(&link);
++	git_str_dispose(&missing);
++	git_str_dispose(&target);
++}

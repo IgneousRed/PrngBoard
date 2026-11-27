@@ -1,4 +1,5 @@
-{ pkgs, python3 ? pkgs.python315 }:
+{ pkgs, python3 ? pkgs.python315, perl ? pkgs.perl,
+  zstd ? pkgs.zstd, cctools ? pkgs.cctools, sigtool ? pkgs.darwin.sigtool }:
 assert pkgs.lib.assertMsg (pkgs.stdenv.hostPlatform.system == "aarch64-darwin")
   "The verified LLVM 23.1.6 bottles support Apple Silicon macOS 26 or later";
 let
@@ -19,26 +20,26 @@ let
       if head -c 2 "$program" | grep -q '^#!'; then
         case "$(basename "$program")" in set-xcode-analyzer) continue ;; esac
         case "$(head -n 1 "$program")" in
-          *perl*) interpreter=${pkgs.perl}/bin/perl ;;
+          *perl*) interpreter=${perl}/bin/perl ;;
           *python*) interpreter=${python3}/bin/python3 ;;
           *) echo "Unsupported auxiliary interpreter: $program" >&2; exit 1 ;;
         esac
         makeWrapper "$interpreter" "$out/bin/$(basename "$program")" \
-          --prefix PATH : ${lib.makeBinPath [ python3 pkgs.perl ]}:${native}/libexec --add-flags "$program"
+          --prefix PATH : ${lib.makeBinPath [ python3 perl ]}:${native}/libexec --add-flags "$program"
       fi
     done
   '';
   native = pkgs.stdenvNoCC.mkDerivation {
   pname = "llvm-native";
   version = "23.1.6";
-  nativeBuildInputs = [ pkgs.python3 pkgs.cctools pkgs.darwin.sigtool ];
+  nativeBuildInputs = [ pkgs.python315 cctools sigtool ];
   dontUnpack = true;
   dontConfigure = true;
   dontBuild = true;
   dontFixup = true;
   installPhase = ''
     python3 ${unpackScript} "$out" ${llvmArchive} ${lldArchive}
-    python3 ${relocateScript} "$out" ${lib.getLib pkgs.z3} ${lib.getLib pkgs.zstd}
+    python3 ${relocateScript} "$out" ${lib.getLib pkgs.z3} ${lib.getLib zstd}
     for program in "$out"/bin/*; do
       if head -c 2 "$program" | grep -q '^#!'; then chmod a-x "$program"; fi
     done

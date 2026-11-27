@@ -1,6 +1,6 @@
 package lib
 
-import "core:intrinsics"
+import "base:intrinsics"
 import "core:time"
 
 // -------------------------------- Data --------------------------------
